@@ -3,8 +3,24 @@
 <head>
   <title>Welcome</title>
   <meta charset="utf-8" />
+  <link rel="stylesheet" href="/css/reset.css" type="text/css" charset="utf-8">
+  <link rel="stylesheet" href="/css/control.css" type="text/css" charset="utf-8">
 </head>
 <body>
+
+  <div class="hud">
+    <div class="controls">
+      <div class="wheel wheel-left">
+        <div class="arrow-forward">↑</div>
+        <div class="arrow-reverse">↓</div>
+      </div>
+      <div class="wheel wheel-right">
+        <div class="arrow-forward">↑</div>
+        <div class="arrow-reverse">↓</div>
+      </div>
+    </div>
+  </div>
+
   <script>
     var s = new WebSocket('ws://nikita-macbook:8080/control?session=nik', 'soundbot-control-1');
     s.onmessage = function(e) {

@@ -1,0 +1,44 @@
+html, body {
+    height: 100%;
+}
+
+.hud {
+    height: 100%;
+
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.controls {
+    display: flex;
+    flex-flow: row;
+    justify-content: flex-start;
+
+    width: 600px;
+    height: 250px;
+
+    cursor: default;
+
+}
+
+.wheel {
+    display: flex;
+    flex-flow: column;
+    justify-content: space-around;
+}
+
+.wheel-left {
+    margin-right: auto;
+}
+.wheel-right {
+    margin-left: auto;
+}
+
+.wheel > .arrow-forward, .wheel > .arrow-reverse {
+    background: green;
+    padding: 30px;
+    text-align: center;
+
+    cursor: pointer;
+}
