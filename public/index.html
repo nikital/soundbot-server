@@ -1,18 +1,18 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Welcome</title>
-    <meta charset="utf-8" />
+  <title>Welcome</title>
+  <meta charset="utf-8" />
 </head>
 <body>
-    <script>
-        var s = new WebSocket('ws://nikita-macbook:8080/control?session=nik', 'soundbot-control-1');
-        s.onmessage = function(e) {
-            console.log(e);
-        };
-        s.onclose = function() {
-            console.log('Connection closed');
-        };
-    </script>
+  <script>
+    var s = new WebSocket('ws://nikita-macbook:8080/control?session=nik', 'soundbot-control-1');
+    s.onmessage = function(e) {
+      console.log(e);
+    };
+    s.onclose = function() {
+      console.log('Connection closed');
+    };
+  </script>
 </body>
 </html>
