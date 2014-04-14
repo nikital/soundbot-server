@@ -42,3 +42,7 @@ html, body {
 
     cursor: pointer;
 }
+
+.wheel > .arrow-active {
+    background: orange;
+}
