@@ -99,6 +99,64 @@ UIControl.prototype.update = function() {
     } else { this.$rightReverse.removeClass('arrow-active'); }
 };
 
+var Connection = function(endpoint, session, state) {
+    this.socket = new WebSocket(
+        endpoint + '?session=' + encodeURIComponent(session),
+        'soundbot-control-1');
+    this.socket.onopen = this.onConnect.bind(this);
+    this.socket.onclose = this.onClose.bind(this);
+    this.socket.onerror = this.onError.bind(this);
+
+    this.state = state;
+};
+
+Connection.prototype.onConnect = function(e) {
+    this.state.$dispatcher.on('steering', this.onSteeringUpdate.bind(this));
+
+    this.onSteeringUpdate();
+};
+
+Connection.prototype.onSteeringUpdate = function() {
+    var p = new Uint8Array(4);
+    p[0] = 1; // Message type: Steering
+
+    if (this.state.wheelLeftForward && this.state.wheelLeftReverse) {
+        // If both are pressed, stop.
+        p[1] = 0;
+    } else if (this.state.wheelLeftForward) {
+        p[1] = 1;
+    } else if (this.state.wheelLeftReverse) {
+        p[1] = 2;
+    } else {
+        p[1] = 0;
+    }
+
+    if (this.state.wheelRightForward && this.state.wheelRightReverse) {
+        // If both are pressed, stop.
+        p[2] = 0;
+    } else if (this.state.wheelRightForward) {
+        p[2] = 1;
+    } else if (this.state.wheelRightReverse) {
+        p[2] = 2;
+    } else {
+        p[2] = 0;
+    }
+
+    p[3] = 0;
+
+    this.socket.send(p);
+};
+
+Connection.prototype.onClose = function(e) {
+    console.log('Connection closed');
+};
+Connection.prototype.onError = function(e) {
+    console.error('Connection error');
+};
+
 var controlState = new ControlState();
 var keyboardControl = new KeyboardControl(controlState);
 var uiControl = new UIControl(controlState);
+var connection = new Connection('ws://nikita-macbook:8080/control',
+                                prompt('Session name:', 'nik'),
+                                controlState);
