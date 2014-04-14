@@ -7,12 +7,22 @@ var ControlState = function() {
     this.$dispatcher = $({});
 };
 
-ControlState.prototype.update = function() {
-    this.$dispatcher.trigger('update');
+ControlState.prototype.setSteering = function(params) {
+    var that = this;
+    $.each(params, function(key, value) {
+        if (key == 'wheelLeftForward' ||
+            key == 'wheelLeftReverse' ||
+            key == 'wheelRightForward' ||
+            key == 'wheelRightReverse') {
+            that[key] = value;
+        }
+    });
+    this.$dispatcher.trigger('steering');
+    this.$dispatcher.trigger('all');
 };
 
 var KeyboardControl = function(state){
-    // state.$dispatcher.on('update', this.update.bind(this));
+    // state.$dispatcher.on('all', this.update.bind(this));
 
     this.state = state;
     this.keysPressed = new Array(256);
@@ -29,20 +39,16 @@ KeyboardControl.prototype.onKeyDown = function(e) {
     this.keysPressed[e.keyCode] = true;
 
     if (e.keyCode == Key.Q) {
-        this.state.wheelLeftForward = true;
-        this.state.update();
+        this.state.setSteering({wheelLeftForward: true});
     }
     else if (e.keyCode == Key.A) {
-        this.state.wheelLeftReverse = true;
-        this.state.update();
+        this.state.setSteering({wheelLeftReverse: true});
     }
     else if (e.keyCode == Key.W) {
-        this.state.wheelRightForward = true;
-        this.state.update();
+        this.state.setSteering({wheelRightForward: true});
     }
     else if (e.keyCode == Key.S) {
-        this.state.wheelRightReverse = true;
-        this.state.update();
+        this.state.setSteering({wheelRightReverse: true});
     }
 };
 
@@ -54,20 +60,16 @@ KeyboardControl.prototype.onKeyUp = function(e) {
     this.keysPressed[e.keyCode] = false;
 
     if (e.keyCode == Key.Q) {
-        this.state.wheelLeftForward = false;
-        this.state.update();
+        this.state.setSteering({wheelLeftForward: false});
     }
     else if (e.keyCode == Key.A) {
-        this.state.wheelLeftReverse = false;
-        this.state.update();
+        this.state.setSteering({wheelLeftReverse: false});
     }
     else if (e.keyCode == Key.W) {
-        this.state.wheelRightForward = false;
-        this.state.update();
+        this.state.setSteering({wheelRightForward: false});
     }
     else if (e.keyCode == Key.S) {
-        this.state.wheelRightReverse = false;
-        this.state.update();
+        this.state.setSteering({wheelRightReverse: false});
     }
 };
 
@@ -79,7 +81,7 @@ var UIControl = function(state){
     this.$rightForward = $('.wheel-right > .arrow-forward');
     this.$rightReverse = $('.wheel-right > .arrow-reverse');
 
-    state.$dispatcher.on('update', this.update.bind(this));
+    state.$dispatcher.on('all', this.update.bind(this));
 };
 
 UIControl.prototype.update = function() {
