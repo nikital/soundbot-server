@@ -3,6 +3,7 @@ var ControlState = function() {
     this.wheelLeftReverse = false;
     this.wheelRightForward = false;
     this.wheelRightReverse = false;
+    this.boost = false;
 
     this.$dispatcher = $({});
 };
@@ -13,7 +14,8 @@ ControlState.prototype.setSteering = function(params) {
         if (key == 'wheelLeftForward' ||
             key == 'wheelLeftReverse' ||
             key == 'wheelRightForward' ||
-            key == 'wheelRightReverse') {
+            key == 'wheelRightReverse' ||
+            key == 'boost') {
             that[key] = value;
         }
     });
@@ -40,15 +42,14 @@ KeyboardControl.prototype.onKeyDown = function(e) {
 
     if (e.keyCode == Key.Q) {
         this.state.setSteering({wheelLeftForward: true});
-    }
-    else if (e.keyCode == Key.A) {
+    } else if (e.keyCode == Key.A) {
         this.state.setSteering({wheelLeftReverse: true});
-    }
-    else if (e.keyCode == Key.W) {
+    } else if (e.keyCode == Key.W) {
         this.state.setSteering({wheelRightForward: true});
-    }
-    else if (e.keyCode == Key.S) {
+    } else if (e.keyCode == Key.S) {
         this.state.setSteering({wheelRightReverse: true});
+    } else if (e.keyCode == Key.SPACE) {
+        this.state.setSteering({boost: true});
     }
 };
 
@@ -61,15 +62,14 @@ KeyboardControl.prototype.onKeyUp = function(e) {
 
     if (e.keyCode == Key.Q) {
         this.state.setSteering({wheelLeftForward: false});
-    }
-    else if (e.keyCode == Key.A) {
+    } else if (e.keyCode == Key.A) {
         this.state.setSteering({wheelLeftReverse: false});
-    }
-    else if (e.keyCode == Key.W) {
+    } else if (e.keyCode == Key.W) {
         this.state.setSteering({wheelRightForward: false});
-    }
-    else if (e.keyCode == Key.S) {
+    } else if (e.keyCode == Key.S) {
         this.state.setSteering({wheelRightReverse: false});
+    } else if (e.keyCode == Key.SPACE) {
+        this.state.setSteering({boost: false});
     }
 };
 
@@ -80,6 +80,8 @@ var UIControl = function(state){
     this.$leftReverse = $('.wheel-left > .arrow-reverse');
     this.$rightForward = $('.wheel-right > .arrow-forward');
     this.$rightReverse = $('.wheel-right > .arrow-reverse');
+
+    this.$boost = $('.boost');
 
     state.$dispatcher.on('all', this.update.bind(this));
 };
@@ -97,6 +99,10 @@ UIControl.prototype.update = function() {
     if (this.state.wheelRightReverse) {
         this.$rightReverse.addClass('arrow-active');
     } else { this.$rightReverse.removeClass('arrow-active'); }
+
+    if (this.state.boost) {
+        this.$boost.addClass('boost-active');
+    } else { this.$boost.removeClass('boost-active'); }
 };
 
 var Connection = function(endpoint, session, state) {
@@ -142,7 +148,7 @@ Connection.prototype.onSteeringUpdate = function() {
         p[2] = 0;
     }
 
-    p[3] = 0;
+    p[3] = this.state.boost;
 
     this.socket.send(p);
 };

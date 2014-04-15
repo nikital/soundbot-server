@@ -14,6 +14,7 @@ html, body {
     display: flex;
     flex-flow: row;
     justify-content: flex-start;
+    align-items: center;
 
     width: 600px;
     height: 250px;
@@ -45,4 +46,12 @@ html, body {
 
 .wheel > .arrow-active {
     background: orange;
+}
+
+.boost {
+    background: #FFAAAA;
+    padding: 10px;
+}
+.boost-active {
+    background: #FF0000;
 }
