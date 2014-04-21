@@ -5,6 +5,11 @@ var ControlState = function() {
     this.wheelRightReverse = false;
     this.boost = false;
 
+    this.frontCameraUp = false;
+    this.frontCameraDown = false;
+
+    this.frontLight = false;
+
     this.$dispatcher = $({});
 };
 
@@ -20,6 +25,29 @@ ControlState.prototype.setSteering = function(params) {
         }
     });
     this.$dispatcher.trigger('steering');
+    this.$dispatcher.trigger('all');
+};
+
+ControlState.prototype.setFrontCamera = function(params) {
+    var that = this;
+    $.each(params, function(key, value) {
+        if (key == 'frontCameraUp' ||
+            key == 'frontCameraDown') {
+            that[key] = value;
+        }
+    });
+    this.$dispatcher.trigger('frontCamera');
+    this.$dispatcher.trigger('all');
+};
+
+ControlState.prototype.setMisc = function(params) {
+    var that = this;
+    $.each(params, function(key, value) {
+        if (key == 'frontLight') {
+            that[key] = value;
+        }
+    });
+    this.$dispatcher.trigger('misc');
     this.$dispatcher.trigger('all');
 };
 
@@ -50,6 +78,12 @@ KeyboardControl.prototype.onKeyDown = function(e) {
         this.state.setSteering({wheelRightReverse: true});
     } else if (e.keyCode == Key.SPACE) {
         this.state.setSteering({boost: true});
+    } else if (e.keyCode == Key.K) {
+        this.state.setFrontCamera({frontCameraUp: true});
+    } else if (e.keyCode == Key.J) {
+        this.state.setFrontCamera({frontCameraDown: true});
+    } else if (e.keyCode == Key.L) {
+        this.state.setMisc({frontLight: !this.state.frontLight});
     }
 };
 
@@ -70,6 +104,10 @@ KeyboardControl.prototype.onKeyUp = function(e) {
         this.state.setSteering({wheelRightReverse: false});
     } else if (e.keyCode == Key.SPACE) {
         this.state.setSteering({boost: false});
+    } else if (e.keyCode == Key.K) {
+        this.state.setFrontCamera({frontCameraUp: false});
+    } else if (e.keyCode == Key.J) {
+        this.state.setFrontCamera({frontCameraDown: false});
     }
 };
 
@@ -82,6 +120,10 @@ var UIControl = function(state){
     this.$rightReverse = $('.wheel-right > .arrow-reverse');
 
     this.$boost = $('.boost');
+
+    this.$frontCameraUp = $('.front-camera-control > .arrow-up');
+    this.$frontCameraDown = $('.front-camera-control > .arrow-down');
+    this.$frontLight = $('.front-camera-control > .light-toggle');
 
     state.$dispatcher.on('all', this.update.bind(this));
 };
@@ -103,6 +145,17 @@ UIControl.prototype.update = function() {
     if (this.state.boost) {
         this.$boost.addClass('boost-active');
     } else { this.$boost.removeClass('boost-active'); }
+
+    if (this.state.frontCameraUp) {
+        this.$frontCameraUp.addClass('active');
+    } else { this.$frontCameraUp.removeClass('active'); }
+    if (this.state.frontCameraDown) {
+        this.$frontCameraDown.addClass('active');
+    } else { this.$frontCameraDown.removeClass('active'); }
+
+    if (this.state.frontLight) {
+        this.$frontLight.addClass('active');
+    } else { this.$frontLight.removeClass('active'); }
 };
 
 var Connection = function(endpoint, session, state) {
@@ -118,6 +171,8 @@ var Connection = function(endpoint, session, state) {
 
 Connection.prototype.onConnect = function(e) {
     this.state.$dispatcher.on('steering', this.onSteeringUpdate.bind(this));
+    this.state.$dispatcher.on('frontCamera', this.onFrontCameraUpdate.bind(this));
+    this.state.$dispatcher.on('misc', this.onMiscUpdate.bind(this));
 
     this.onSteeringUpdate();
 };
@@ -126,29 +181,47 @@ Connection.prototype.onSteeringUpdate = function() {
     var p = new Uint8Array(4);
     p[0] = 1; // Message type: Steering
 
-    if (this.state.wheelLeftForward && this.state.wheelLeftReverse) {
-        // If both are pressed, stop.
+    if (this.state.wheelLeftForward == this.state.wheelLeftReverse) {
         p[1] = 0;
     } else if (this.state.wheelLeftForward) {
         p[1] = 1;
     } else if (this.state.wheelLeftReverse) {
         p[1] = 2;
-    } else {
-        p[1] = 0;
     }
 
-    if (this.state.wheelRightForward && this.state.wheelRightReverse) {
-        // If both are pressed, stop.
+    if (this.state.wheelRightForward == this.state.wheelRightReverse) {
         p[2] = 0;
     } else if (this.state.wheelRightForward) {
         p[2] = 1;
     } else if (this.state.wheelRightReverse) {
         p[2] = 2;
-    } else {
-        p[2] = 0;
     }
 
     p[3] = this.state.boost;
+
+    this.socket.send(p);
+};
+
+Connection.prototype.onFrontCameraUpdate = function() {
+    var p = new Uint8Array(2);
+    p[0] = 2; // Message type: Front Camera
+
+    if (this.state.frontCameraUp == this.state.frontCameraDown) {
+        p[1] = 0;
+    } else if (this.state.frontCameraUp) {
+        p[1] = 1;
+    } else if (this.state.frontCameraDown) {
+        p[1] = 2;
+    }
+
+    this.socket.send(p);
+};
+
+Connection.prototype.onMiscUpdate = function() {
+    var p = new Uint8Array(2);
+    p[0] = 3; // Message type: Misc
+
+    p[1] = this.state.frontLight ? 1 : 0;
 
     this.socket.send(p);
 };

@@ -6,8 +6,9 @@ html, body {
     height: 100%;
 
     display: flex;
+    flex-flow: column;
     justify-content: center;
-    align-items: flex-end;
+    align-items: center;
 }
 
 .controls {
@@ -54,4 +55,28 @@ html, body {
 }
 .boost-active {
     background: #FF0000;
+}
+
+.visual {
+    display: flex;
+    align-items: center;
+}
+
+#front-camera {
+    width: 640px;
+    height: 480px;
+    background: grey;
+}
+
+.front-camera-control > .arrow-up,
+.front-camera-control > .arrow-down,
+.front-camera-control > .light-toggle {
+    background: green;
+    padding: 8px;
+    cursor: pointer;
+    margin: 4px;
+}
+
+.front-camera-control > .active {
+    background: orange;
 }
