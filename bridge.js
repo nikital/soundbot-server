@@ -86,37 +86,66 @@ Bridge.prototype._onSlaveClose = function() {
     // Don't drop the bridge, wait for another slave to connect
 };
 
-function BridgePool() {
+function BridgePool(masterProtocol, slaveProtocol) {
     this._bridges = [];
+    this._masterProtocol = masterProtocol;
+    this._slaveProtocol = slaveProtocol;
 }
 
-BridgePool.prototype.addBridge = function(bridge) {
-    if (this.getBridgeByName(bridge.name)) {
-        console.log((new Date()) + ' Duplicate bridge: ' + bridge.name);
+BridgePool.prototype.addMaster = function(req, name) {
+    if (req.requestedProtocols.indexOf(this._masterProtocol) == -1) {
+        console.log((new Date()) + ' Unknown master protocols: ' + req.requestedProtocols);
+        req.reject(400, 'Unknown protocol');
         return;
     }
 
+    var bridgeIdx = this._getBridgeIndexByName(name);
+    if (bridgeIdx != -1) {
+        console.log((new Date()) + ' Duplicate master attemped to connect: ' + name);
+        req.reject(409, 'Bridge already present');
+        return;
+    }
+
+    var bridge = new Bridge(name, this._masterProtocol, this._slaveProtocol);
     this._bridges.push(bridge);
     bridge.on('close', this._onBridgeClose.bind(this));
+
+    bridge.addMaster(req);
 };
 
-BridgePool.prototype.getBridgeByName = function(name) {
+BridgePool.prototype.addSlave = function(req, name) {
+    if (req.requestedProtocols.indexOf(this._slaveProtocol) == -1) {
+        console.log((new Date()) + ' Unknown slave protocols: ' + req.requestedProtocols);
+        req.reject(400, 'Unknown protocol');
+        return;
+    }
+
+    var bridgeIdx = this._getBridgeIndexByName(name);
+    if (bridgeIdx == -1) {
+        console.log((new Date()) + ' Bridge not found: ' + name);
+        req.reject(404, 'Bridge not found');
+        return;
+    }
+
+    var bridge = this._bridges[bridgeIdx];
+    bridge.addSlave(req);
+};
+
+BridgePool.prototype._getBridgeIndexByName = function(name) {
     for (var i = 0; i < this._bridges.length; ++i) {
         var bridge = this._bridges[i];
         if (bridge.name === name) {
-            return bridge;
+            return i;
         }
     }
 
-    return null;
+    return -1;
 };
 
 BridgePool.prototype._onBridgeClose = function(bridge) {
-    for (var i = 0; i < this._bridges.length; ++i) {
-        if (this._bridges[i] === bridge) {
-            this._bridges.splice(i, 1);
-            break;
-        }
+    var i = this._getBridgeIndexByName(bridge.name);
+    if (i != -1) {
+        this._bridges.splice(i, 1);
     }
 };
 

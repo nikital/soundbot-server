@@ -3,9 +3,7 @@
 var http = require('http');
 var express = require('express');
 var WebSocketServer = require('websocket').server;
-var bridge = require('./bridge.js');
-var Bridge = bridge.Bridge;
-var BridgePool = bridge.BridgePool;
+var BridgePool = require('./bridge.js').BridgePool;
 
 var app = express();
 app.use(express.static(__dirname + '/public'));
@@ -16,7 +14,8 @@ ws = new WebSocketServer({
     autoAcceptConnections: false
 });
 
-var controlConnections = new BridgePool();
+var controlConnections = new BridgePool('soundbot-bot-1', 'soundbot-control-1');
+var sdpConnections = new BridgePool('soundbot-sdp-1', 'soundbot-sdp-1');
 
 function onBotRequest(req) {
     var session = req.resourceURL.query.session;
@@ -25,19 +24,7 @@ function onBotRequest(req) {
         return;
     }
 
-    if (controlConnections.getBridgeByName(session)) {
-        req.reject(409, 'Session already present');
-        return;
-    }
-
-    if (req.requestedProtocols.indexOf('soundbot-bot-1') == -1) {
-        req.reject(400, 'Unknown protocol');
-        return;
-    }
-
-    var bridge = new Bridge(session, 'soundbot-bot-1', 'soundbot-control-1');
-    controlConnections.addBridge(bridge);
-    bridge.addMaster(req);
+    controlConnections.addMaster(req, session);
 };
 
 function onControlRequest(req) {
@@ -47,18 +34,27 @@ function onControlRequest(req) {
         return;
     }
 
-    var bridge = controlConnections.getBridgeByName(session);
-    if (!bridge) {
-        req.reject(404, 'Session not found');
+    controlConnections.addSlave(req, session);
+};
+
+function onSdpOfferRequest(req) {
+    var session = req.resourceURL.query.session;
+    if (!session) {
+        req.reject(400, 'No session name');
         return;
     }
 
-    if (req.requestedProtocols.indexOf('soundbot-control-1') == -1) {
-        req.reject(400, 'Unknown protocol');
+    sdpConnections.addMaster(req, session);
+};
+
+function onSdpAnswerRequest(req) {
+    var session = req.resourceURL.query.session;
+    if (!session) {
+        req.reject(400, 'No session name');
         return;
     }
 
-    bridge.addSlave(req);
+    sdpConnections.addSlave(req, session);
 };
 
 ws.on('request', function(req) {
@@ -66,6 +62,10 @@ ws.on('request', function(req) {
         onBotRequest(req);
     } else if (req.resourceURL.pathname == '/control') {
         onControlRequest(req);
+    } else if (req.resourceURL.pathname == '/sdp/offer') {
+        onSdpOfferRequest(req);
+    } else if (req.resourceURL.pathname == '/sdp/answer') {
+        onSdpAnswerRequest(req);
     } else {
         req.reject(404, 'Endpoint not found');
     }
