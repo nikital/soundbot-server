@@ -6,7 +6,7 @@
 </head>
 <body>
   <script>
-    var s = new WebSocket('ws://nikita-macbook:8080/bot?session=nik', 'soundbot-bot-1');
+    var s = new WebSocket('ws://' + window.location.host + '/bot?session=nik', 'soundbot-bot-1');
     s.onmessage = function(e) {
       console.log(e);
     };

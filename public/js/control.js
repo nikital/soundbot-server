@@ -236,6 +236,6 @@ Connection.prototype.onError = function(e) {
 var controlState = new ControlState();
 var keyboardControl = new KeyboardControl(controlState);
 var uiControl = new UIControl(controlState);
-var connection = new Connection('ws://nikita-macbook:8080/control',
+var connection = new Connection('ws://' + window.location.host + '/control',
                                 prompt('Session name:', 'nik'),
                                 controlState);
