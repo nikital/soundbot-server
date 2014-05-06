@@ -1,4 +1,4 @@
-var ControlState = function() {
+function ControlState() {
     this.wheelLeftForward = false;
     this.wheelLeftReverse = false;
     this.wheelRightForward = false;
@@ -51,7 +51,7 @@ ControlState.prototype.setMisc = function(params) {
     this.$dispatcher.trigger('all');
 };
 
-var KeyboardControl = function(state){
+function KeyboardControl(state){
     // state.$dispatcher.on('all', this.update.bind(this));
 
     this.state = state;
@@ -111,7 +111,7 @@ KeyboardControl.prototype.onKeyUp = function(e) {
     }
 };
 
-var UIControl = function(state){
+function UIControl(state){
     this.state = state;
 
     this.$leftForward = $('.wheel-left > .arrow-forward');
@@ -158,7 +158,7 @@ UIControl.prototype.update = function() {
     } else { this.$frontLight.removeClass('active'); }
 };
 
-var Connection = function(endpoint, session, state) {
+function Connection(endpoint, session, state) {
     this.socket = new WebSocket(
         endpoint + '?session=' + encodeURIComponent(session),
         'soundbot-control-1');
@@ -233,9 +233,11 @@ Connection.prototype.onError = function(e) {
     console.error('Connection error');
 };
 
+var session = prompt('Session name:', 'nik');
+
 var controlState = new ControlState();
 var keyboardControl = new KeyboardControl(controlState);
 var uiControl = new UIControl(controlState);
 var connection = new Connection('ws://' + window.location.host + '/control',
-                                prompt('Session name:', 'nik'),
+                                session,
                                 controlState);
