@@ -233,6 +233,42 @@ Connection.prototype.onError = function(e) {
     console.error('Connection error');
 };
 
+function CameraReceiver(endpoint, session, videoElement) {
+    this._video = videoElement;
+
+    this._pc = new RTCPeerConnection(WebRTC.peerConnectionConfig);
+    this._pc.onicecandidate = this._onIceCandidate.bind(this);
+    this._pc.onaddstream = this._onAddStream.bind(this);
+
+    this._signaling = new Signaling(endpoint, session);
+    this._signaling.$dispatcher.on('message', this._onSignalingMessage.bind(this));
+
+    this._signaling.signal({get_offer: true});
+}
+
+CameraReceiver.prototype._onSignalingMessage = function(e, message) {
+    if (message.sdp) {
+        this._pc.setRemoteDescription(new RTCSessionDescription(message.sdp));
+        this._pc.createAnswer((function(desc) {
+            this._pc.setLocalDescription(desc);
+            this._signaling.signal({sdp:desc});
+        }).bind(this));
+    } else if (message.ice) {
+        this._pc.addIceCandidate(new RTCIceCandidate(message.ice));
+    }
+};
+
+CameraReceiver.prototype._onIceCandidate = function(e) {
+    if (e.candidate) {
+        this._signaling.signal({ice: e.candidate});
+    }
+};
+
+CameraReceiver.prototype._onAddStream = function(e) {
+    this._video.src = URL.createObjectURL(e.stream);
+    this._video.play();
+};
+
 var session = prompt('Session name:', 'nik');
 
 var controlState = new ControlState();
@@ -241,3 +277,6 @@ var uiControl = new UIControl(controlState);
 var connection = new Connection('ws://' + window.location.host + '/control',
                                 session,
                                 controlState);
+var cameraReceiver = new CameraReceiver(
+    'ws://' + window.location.host + '/sdp/answer', session,
+    document.getElementById('front-camera'));
